@@ -195,7 +195,7 @@ class Corpus:
     matters: list[Matter] = field(default_factory=list)
     documents: list[Document] = field(default_factory=list)
     questions: list[EvalQuestion] = field(default_factory=list)
-    training_pairs: list[tuple[str, str]] = field(default_factory=list)  # (paraphrased query, clause)
+    training_pairs: list[tuple[str, str, str]] = field(default_factory=list)  # (query, clause, clause key)
 
     def matters_for(self, tenant_id: str) -> list[Matter]:
         return [m for m in self.matters if m.tenant_id == tenant_id]
@@ -268,5 +268,25 @@ def build_corpus(seed: int = 7, matters_per_firm: int = 4) -> Corpus:
         values = _values(rng)
         for kind in kinds:
             for clause in CLAUSES[kind]:
-                corpus.training_pairs.append((clause.hard_train, clause.template.format(**values)))
+                sentence = clause.template.format(**values)
+                corpus.training_pairs.append((clause.hard_train, sentence, clause.key))
+                for _ in range(2):
+                    corpus.training_pairs.append((synthetic_query(sentence, rng), sentence, clause.key))
     return corpus
+
+
+def synthetic_query(sentence: str, rng: random.Random, keep: float = 0.25) -> str:
+    """Teacher-style query generation: restate a clause in colloquial vocabulary.
+
+    Drafting terms are swapped for synonyms and most other words are dropped, which forces the
+    embedder to learn that "tenant" and "Lessee" mean the same thing instead of leaning on the
+    words a query and its clause happen to share. It never sees an eval question.
+    """
+    words = []
+    for word in sentence.split():
+        canonical = stem(re.sub(r"[^A-Za-z]", "", word))
+        if canonical in THESAURUS:
+            words.append(rng.choice(THESAURUS[canonical]) if rng.random() < 0.8 else word.lower())
+        elif not any(ch.isdigit() for ch in word) and rng.random() < keep:
+            words.append(word.lower().strip(".,"))
+    return " ".join(words)

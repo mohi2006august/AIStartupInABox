@@ -76,21 +76,28 @@ class TunedEmbedder:
 
     def fit(
         self,
-        pairs: list[tuple[str, str]],
+        pairs: list[tuple[str, ...]],
         epochs: int = 60,
         lr: float = 0.5,
         temperature: float = 0.1,
         identity_reg: float = 0.01,
     ) -> list[float]:
-        """InfoNCE with in-batch negatives. Returns the loss curve."""
+        """InfoNCE with in-batch negatives. Returns the loss curve.
+
+        Pairs are (query, passage) or (query, passage, group). Rows sharing a group are near
+        duplicates, so they are masked out as negatives instead of being pushed apart.
+        """
         q = self.base.embed([p[0] for p in pairs])
         d = self.base.embed([p[1] for p in pairs])
         n = len(pairs)
+        groups = np.array([p[2] if len(p) > 2 else str(i) for i, p in enumerate(pairs)])
+        false_negative = (groups[:, None] == groups[None, :]) & ~np.eye(n, dtype=bool)
         eye = np.eye(self.dim, dtype=np.float32)
         losses: list[float] = []
         for _ in range(epochs):
             a, b = q @ self.W.T, d @ self.W.T
             logits = a @ b.T / temperature
+            logits[false_negative] = -1e9
             logits -= logits.max(axis=1, keepdims=True)
             probs = np.exp(logits)
             probs /= probs.sum(axis=1, keepdims=True)
