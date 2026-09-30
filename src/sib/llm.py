@@ -45,8 +45,8 @@ CATALOG: dict[str, ModelSpec] = {
                                   Decimal("0.10"), Decimal("1.25"), 350, 6.0, 0.80),
     "sib-8b-awq": ModelSpec("sib-8b-awq", "self_hosted", Decimal("0.16"), Decimal("0.16"),
                             Decimal("0.16"), Decimal("0.16"), 250, 9.0, 0.62),
-    "sib-8b-fp16": ModelSpec("sib-8b-fp16", "self_hosted", Decimal("0.55"), Decimal("0.55"),
-                             Decimal("0.55"), Decimal("0.55"), 320, 18.0, 0.66),
+    "sib-8b-fp16": ModelSpec("sib-8b-fp16", "self_hosted", Decimal("0.56"), Decimal("0.56"),
+                             Decimal("0.56"), Decimal("0.56"), 320, 18.0, 0.66),
 }
 FRONTIER = "claude-opus-5-5"
 
