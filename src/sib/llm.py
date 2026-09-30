@@ -40,13 +40,13 @@ class ModelSpec:
 # Self-hosted prices are derived in sib.quantize.serving_cost_per_mtok from GPU cost and throughput.
 CATALOG: dict[str, ModelSpec] = {
     "claude-opus-5-5": ModelSpec("claude-opus-5-5", "frontier", Decimal("4.00"), Decimal("20.00"),
-                                 Decimal("0.20"), Decimal("5.00"), 900, 14.0, 1.0),
+                                 Decimal("0.20"), Decimal("5.00"), 900, 12.0, 1.0),
     "claude-haiku-4-5": ModelSpec("claude-haiku-4-5", "cheap_api", Decimal("1.00"), Decimal("5.00"),
-                                  Decimal("0.10"), Decimal("1.25"), 350, 6.0, 0.80),
+                                  Decimal("0.10"), Decimal("1.25"), 350, 6.0, 0.66),
     "sib-8b-awq": ModelSpec("sib-8b-awq", "self_hosted", Decimal("0.16"), Decimal("0.16"),
-                            Decimal("0.16"), Decimal("0.16"), 250, 9.0, 0.62),
+                            Decimal("0.16"), Decimal("0.16"), 250, 9.0, 0.45),
     "sib-8b-fp16": ModelSpec("sib-8b-fp16", "self_hosted", Decimal("0.56"), Decimal("0.56"),
-                             Decimal("0.56"), Decimal("0.56"), 320, 18.0, 0.66),
+                             Decimal("0.56"), Decimal("0.56"), 320, 18.0, 0.50),
 }
 FRONTIER = "claude-opus-5-5"
 

@@ -36,7 +36,8 @@ def test_difficulty_student_learns_from_retrieval_features():
 
 def test_choose_models_picks_cheapest_that_meets_target():
     quality = {"ask:easy": {"big": 99.0, "small": 98.0}, "ask:hard": {"big": 97.0, "small": 70.0}}
-    cost = {"big": Decimal("0.02"), "small": Decimal("0.001")}
+    per_class = {"big": Decimal("0.02"), "small": Decimal("0.001")}
+    cost = {"ask:easy": per_class, "ask:hard": per_class}
     table = choose_models(quality, cost, {"ask:easy": 97.0, "ask:hard": 95.0}, fallback="big")
     assert table == {"ask:easy": "small", "ask:hard": "big"}
     assert choose_models(quality, cost, {"ask:easy": 99.5, "ask:hard": 99.5}, fallback="big")["ask:easy"] == "big"

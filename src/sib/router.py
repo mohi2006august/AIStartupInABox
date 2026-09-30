@@ -12,12 +12,13 @@ from decimal import Decimal
 
 import numpy as np
 
-from sib.embeddings import HashingEmbedder, content_words
+from sib.embeddings import HashingEmbedder, tokenize_words
 
 INTENTS = ["ask", "draft", "summarize", "action"]
 
 _TEACHER_CUES: dict[str, list[str]] = {
-    "draft": ["draft", "write", "prepare", "compose", "letter", "notice", "redraft"],
+    "ask": ["what", "how", "when", "where", "which", "who", "whom", "many", "much"],
+    "draft": ["draft", "write", "prepare", "compose", "redraft"],
     "summarize": ["summarise", "summarize", "summary", "overview", "recap", "tldr", "brief", "digest"],
     "action": ["email", "send", "schedule", "calendar", "book", "forward", "upload", "invite", "remind"],
 }
@@ -46,8 +47,9 @@ def softmax(z: np.ndarray, temperature: float = 1.0) -> np.ndarray:
 
 def teacher_intent_probs(text: str, temperature: float = 2.0) -> np.ndarray:
     """Stand-in for a frontier model labelling requests. Returns soft targets over INTENTS."""
-    words = set(content_words(text))
-    scores = np.array([0.8] + [2.5 * len(words & set(_TEACHER_CUES[i])) for i in INTENTS[1:]])
+    words = set(tokenize_words(text))
+    scores = np.array([0.8 + 2.5 * len(words & set(_TEACHER_CUES["ask"]))]
+                      + [2.5 * len(words & set(_TEACHER_CUES[i])) for i in INTENTS[1:]])
     return softmax(scores, temperature)
 
 
@@ -107,17 +109,23 @@ class RouteDecision:
 
 
 class DistilledRouter:
-    EXTRA = 3  # retrieval features appended to the question embedding
+    """Intent is read from the request text. Difficulty is read from retrieval features only
+    (how much of the question the retrieved passages cover lexically): unlike word features,
+    those transfer to phrasings the student never saw.
+    """
+
+    EXTRA = 3
 
     def __init__(self, embedder: HashingEmbedder | None = None, hard_threshold: float = 0.5) -> None:
         self.embedder = embedder or HashingEmbedder(128)
         self.intent = SoftmaxStudent(self.embedder.dim, len(INTENTS))
-        self.difficulty = SoftmaxStudent(self.embedder.dim + self.EXTRA, 2)
+        self.difficulty = SoftmaxStudent(self.EXTRA, 2)
         self.hard_threshold = hard_threshold
         self.table: dict[str, str] = {}
+        self.report: dict[str, object] = {}
 
     def features(self, text: str, retrieval: tuple[float, float, float] = (0.0, 0.0, 0.0)) -> np.ndarray:
-        return np.concatenate([self.embedder.embed_one(text), np.asarray(retrieval, dtype=np.float32)])
+        return np.asarray(retrieval, dtype=np.float32)
 
     def fit_intent(self, texts: list[str], teacher_probs: np.ndarray) -> list[float]:
         return self.intent.fit(self.embedder.embed(texts), teacher_probs)
@@ -130,18 +138,24 @@ class DistilledRouter:
         p_hard = float(self.difficulty.predict_proba(self.features(text, retrieval)[None])[0, 1])
         return intent, p_hard
 
-    def route(self, text: str, retrieval: tuple[float, float, float], default_model: str) -> RouteDecision:
-        intent, p_hard = self.classify(text, retrieval)
+    def route(self, text: str, retrieval: tuple[float, float, float], default_model: str,
+              intent: str | None = None) -> RouteDecision:
+        """Pass `intent` when the endpoint already fixes it; only difficulty is predicted then."""
+        predicted, p_hard = self.classify(text, retrieval)
+        intent = intent or predicted
         cls = f"{intent}:{'hard' if p_hard >= self.hard_threshold else 'easy'}"
         return RouteDecision(intent, p_hard, cls, self.table.get(cls, default_model))
 
 
 def choose_models(
-    quality: dict[str, dict[str, float]], cost_per_request: dict[str, Decimal], target: dict[str, float], fallback: str,
+    quality: dict[str, dict[str, float]], cost: dict[str, dict[str, Decimal]], target: dict[str, float], fallback: str,
 ) -> dict[str, str]:
-    """Margin-aware routing: per class, the cheapest model with measured quality >= target."""
+    """Margin-aware routing: per class, the cheapest model with measured quality >= target.
+
+    `cost[cls][model]` must include the cost of escalations that model triggers on that class.
+    """
     table = {}
     for cls, scores in quality.items():
         ok = [m for m, s in scores.items() if s >= target[cls]]
-        table[cls] = min(ok, key=lambda m: cost_per_request[m]) if ok else fallback
+        table[cls] = min(ok, key=lambda m: cost[cls][m]) if ok else fallback
     return table

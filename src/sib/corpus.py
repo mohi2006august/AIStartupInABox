@@ -243,8 +243,11 @@ def _side_documents(tenant_id: str, matter_id: str, a: str, b: str, rng: random.
     ]
 
 
-def build_corpus(seed: int = 7, matters_per_firm: int = 4) -> Corpus:
+def build_corpus(seed: int = 7, matters_per_firm: int = 4, split: str = "eval") -> Corpus:
+    """split="train" phrases hard questions with the training paraphrases (use a different seed),
+    so routers and embedders can be fitted without ever touching an eval question."""
     rng = random.Random(seed)
+    hard_attr = "hard" if split == "eval" else "hard_train"
     corpus = Corpus(tenants=dict(FIRMS))
     kinds = list(CLAUSES)
     for tenant_id, _ in FIRMS:
@@ -261,7 +264,8 @@ def build_corpus(seed: int = 7, matters_per_firm: int = 4) -> Corpus:
                 for difficulty in ("easy", "hard"):
                     corpus.questions.append(EvalQuestion(
                         f"{matter.id}-{clause.key}-{difficulty}", tenant_id, matter.id,
-                        getattr(clause, difficulty), values[clause.answer_field], difficulty, clause.key,
+                        getattr(clause, hard_attr if difficulty == "hard" else "easy"), values[clause.answer_field],
+                        difficulty, clause.key,
                     ))
     # Public training set: different values, different paraphrases; never overlaps the eval questions.
     for _ in range(6):

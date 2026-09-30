@@ -140,9 +140,13 @@ def simulate(s: Scenario, unit: UnitCosts, months: int = HORIZON_MONTHS) -> list
     return rows
 
 
-def runway_months(rows: list[MonthRow]) -> int | None:
-    """Months until cash runs out; None if it never does within the horizon."""
-    return next((r.month for r in rows if r.cash < 0), None)
+def runway_months(rows: list[MonthRow]) -> float | None:
+    """Months until cash runs out (interpolated within the month); None if it never does."""
+    for r in rows:
+        if r.cash < 0:
+            cash_at_start = r.cash + r.net_burn
+            return round(r.month - 1 + float(cash_at_start / r.net_burn), 2)
+    return None
 
 
 def default_alive(rows: list[MonthRow]) -> bool:
@@ -166,7 +170,7 @@ def runway_delta_months(s: Scenario, before: UnitCosts, after: UnitCosts) -> flo
     """Re-run the simulation with the new burn. Runways beyond the horizon are capped at it."""
     b = runway_months(simulate(s, before)) or HORIZON_MONTHS
     a = runway_months(simulate(s, after)) or HORIZON_MONTHS
-    return float(a - b)
+    return round(float(a - b), 2)
 
 
 def summary(s: Scenario, unit: UnitCosts, margin_target: float = 0.75) -> dict[str, object]:

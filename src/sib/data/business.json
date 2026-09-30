@@ -1,0 +1,17 @@
+{
+  "cash": 350000,
+  "monthly_opex": 22000,
+  "customers": 10,
+  "seats_per_account": 5,
+  "seat_price": 149,
+  "requests_per_seat_per_month": 900,
+  "draft_share": 0.15,
+  "other_cogs_per_account": 110,
+  "monthly_churn": 0.025,
+  "trial_requests": 300,
+  "channels": [
+    {"name": "linkedin_ads", "monthly_spend": 6000, "new_customers_per_month": 0.8, "trials_per_month": 6},
+    {"name": "content_seo", "monthly_spend": 1500, "new_customers_per_month": 0.6, "trials_per_month": 3},
+    {"name": "referral", "monthly_spend": 900, "new_customers_per_month": 1.0, "trials_per_month": 2}
+  ]
+}
