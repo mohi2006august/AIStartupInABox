@@ -15,8 +15,7 @@ _WORD = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 
 def count_tokens(text: str) -> int:
     """Approximate tokens: ~4 ASCII chars/token; non-ASCII scripts cost ~1 token per 1.5 chars."""
-    total = text.count("
-")  # newline + indentation runs cost ~1 token each
+    total = text.count(chr(10))  # newline + indentation runs cost ~1 token each
     for piece in _WORD.findall(text):
         ascii_chars = sum(1 for c in piece if ord(c) < 128)
         other = len(piece) - ascii_chars
