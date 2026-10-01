@@ -77,7 +77,8 @@ class AppState:
     def reload(self) -> None:
         """Rebuild the stack on the current production config (after a ledger change)."""
         self.config = self.ledger.current_config()
-        self.stack = Stack(self.config)
+        live = self.config.with_(live=True) if self.settings.live_models else self.config
+        self.stack = Stack(live)  # benchmarks and economics always replay on the simulator
         self._persisted = 0
         self._measured = None
 

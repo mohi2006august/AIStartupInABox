@@ -190,11 +190,11 @@ Representing weights (and sometimes activations/KV cache) with fewer bits (int8,
 
 ## 5. Experiments to Run
 
-| # | Hypothesis | How to test |
-|---|---|---|
-| 1 | Caching + routing alone reach 75% margin before any self-hosting | Ledger sequence. |
-| 2 | Per-firm LoRA improves draft acceptance ≥ 15% | A/B with design partners. |
-| 3 | Referral loop has lowest CAC payback | Channel CAC tracking. |
+| # | Hypothesis | How to test | Result so far (simulated, see docs/assumptions.md) |
+|---|---|---|---|
+| 1 | Caching + routing alone reach 75% margin before any self-hosting | Ledger sequence. | Not quite: 59% → 73.4% at 10 customers. Self-hosting closes the gap once volume fills a GPU node (+5.8 pts at 50 customers). |
+| 2 | Per-firm LoRA improves draft acceptance ≥ 15% | A/B with design partners. | Style match on held-out firm examples: +11 to +42 pts over the base model, and above 20-shot prompting. Needs real design partners. |
+| 3 | Referral loop has lowest CAC payback | Channel CAC tracking. | In the scenario: referral 1.7 mo vs LinkedIn 13.8 mo (assumed spend and conversion, not observed). |
 
 ## 6. Ideas Backlog
 
@@ -206,9 +206,20 @@ Representing weights (and sometimes activations/KV cache) with fewer bits (int8,
 
 | Date | Decision | Reason |
 |---|---|---|
-| YYYY-MM-DD | APIs first, self-host later | Speed to customers beats margin in month 1; the ledger tells us when to switch. |
-| YYYY-MM-DD | Decision ledger mandatory | Forces measurement of every optimisation. |
+| 2026-09-30 | APIs first, self-host later | Speed to customers beats margin in month 1; the ledger tells us when to switch. |
+| 2026-09-30 | Decision ledger mandatory | Forces measurement of every optimisation. |
+| 2026-09-30 | Offline simulator behind the provider interface | Reproducible evals and ledger with no keys; `ClaudeProvider` swaps in with `LIVE_MODELS=true`. |
+| 2026-09-30 | Single-file web console served by FastAPI instead of Next.js | One deployable, no build step; revisit when the UI outgrows it. |
+| 2026-09-30 | Stripe deferred behind a `BillingGateway` protocol | New paid service; invoices are computed and stored locally until design partners sign. |
+| 2026-10-01 | Keep tuned embeddings | +30.9 quality pts on the ask eval for −0.4 margin pts. |
+| 2026-10-01 | Keep the caching stack | +13.6 margin pts, +10.3 months runway, no quality change. Semantic threshold 0.82 is only safe with the tuned embedder (12 false hits with the base embedder). |
+| 2026-10-01 | Keep the distilled router (Haiku for easy asks) | +1.5 margin pts; flips the scenario to default alive. Difficulty uses retrieval-coverage features only, because word features did not transfer to new phrasings. |
+| 2026-10-01 | Revert self-hosting at 10 customers | −3.5 margin pts: the $864/month node sits mostly idle. Re-bench at 15+ customers. |
+| 2026-10-01 | Revert the 6,800-token context budget | Quality gate: −2.6 pts. |
 
 ## 8. Scratchpad
 
 - _Dump raw thoughts, links and half-formed ideas here._
+- The verifier only catches unsupported claims. A weak model that cites the wrong clause verbatim passes verification; that is what the router's difficulty threshold is calibrated against.
+- Embedding query-generation settings were picked while watching eval recall. Re-check on real firm documents before trusting the number.
+- A canary that is memorised is the clearest overfitting signal at small data sizes: in these runs most adapters trained on 60-150 examples memorised canaries; none trained on 300 did.

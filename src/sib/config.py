@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     stripe_key: str = ""
     database_url: str = ""
     margin_target: float = 0.75
+    live_models: bool = False  # LIVE_MODELS=true: API-tier models call the real Claude API
     state_dir: str = ".sib_state"
     ledger_dir: str = "ledger"
     evals_dir: str = "evals"
