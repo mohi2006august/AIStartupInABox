@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     database_url: str = ""
     margin_target: float = 0.75
     state_dir: str = ".sib_state"
+    ledger_dir: str = "ledger"
+    evals_dir: str = "evals"
 
 
 @lru_cache
