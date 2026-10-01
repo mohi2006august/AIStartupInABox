@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sib-console",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "--app-dir", "src", "sib.api:create_app", "--factory", "--port", "8765"],
+      "port": 8765
+    }
+  ]
+}

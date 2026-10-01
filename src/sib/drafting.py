@@ -264,7 +264,7 @@ class DraftRequest:
     matter: str
     action: str  # e.g. "pay the outstanding rent of INR 240,000"
     days: int = 14
-    on: date = date(2026, 9, 30)
+    on: date = field(default_factory=date.today)
 
 
 def _ordinal(n: int) -> str:

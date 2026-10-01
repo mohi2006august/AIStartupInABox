@@ -73,7 +73,8 @@ def test_adapter_beats_few_shot_prompting(base):
 
 def test_render_draft_uses_chosen_variants():
     req = DraftRequest("firm_aurora", "demand_letter", "opposing_counsel", "Acme Textiles", "Borealis Foods",
-                       "Acme Textiles v. Borealis Foods", "pay the outstanding rent of INR 240,000")
+                       "Acme Textiles v. Borealis Foods", "pay the outstanding rent of INR 240,000",
+                       on=__import__("datetime").date(2026, 9, 30))
     text = render_draft({s: 0 for s in __import__("sib.drafting", fromlist=["SLOT_NAMES"]).SLOT_NAMES}, req, "Aurora Legal LLP")
     assert "In the matter of Acme Textiles v. Borealis Foods" in text
     assert "Dated this 30th day of September, 2026" in text

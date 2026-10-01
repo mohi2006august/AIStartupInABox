@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from datetime import date
 
 import numpy as np
 
@@ -16,6 +17,7 @@ from sib.drafting import AUDIENCES, DOC_TYPES, style_match
 from sib.llm import ABSTAIN, CATALOG
 from sib.metering import percentile
 
+BENCH_DATE = date(2026, 9, 30)
 ACTIONS = {"lease": "remedy the breach of the lease", "employment": "confirm compliance with the employment terms",
            "supply": "settle the outstanding invoices"}
 
@@ -76,7 +78,7 @@ class BenchResult:
 
 
 def run_workload(config: StackConfig, corpus: Corpus | None = None, workload: list[Request] | None = None) -> BenchResult:
-    stack = Stack(config, corpus=corpus)
+    stack = Stack(config, corpus=corpus, today=BENCH_DATE)
     workload = workload or build_workload(stack.corpus)
     assets = drafting_assets()
     matter_text: dict[str, str] = {}

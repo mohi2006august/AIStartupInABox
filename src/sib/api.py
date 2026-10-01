@@ -21,7 +21,7 @@ from sib.app import Answer, Stack, drafting_assets
 from sib.config import Settings, get_settings
 from sib.drafting import AUDIENCES, DOC_TYPES
 from sib.economics import summary
-from sib.ledger import CHANGE_BY_ID, CHANGES, DecisionRecord, Ledger, bench, default_scenario, to_json, unit_costs
+from sib.ledger import BASELINE, CHANGE_BY_ID, CHANGES, DecisionRecord, Ledger, bench, default_scenario, to_json, unit_costs
 from sib.mcp_gateway import PolicyError
 from sib.metering import UsageEvent
 from sib.router import INTENTS
@@ -71,6 +71,7 @@ class AppState:
         self.lock = threading.Lock()
         self._persisted = 0
         self._measured: BenchResult | None = None
+        self._baseline: BenchResult | None = None
         self.reload()
 
     def reload(self) -> None:
@@ -93,6 +94,12 @@ class AppState:
         if self._measured is None:
             self._measured = run_workload(self.config)
         return self._measured
+
+    def baseline(self) -> BenchResult:
+        """The M1 MVP (frontier API for everything) for before/after comparisons."""
+        if self._baseline is None:
+            self._baseline = run_workload(BASELINE)
+        return self._baseline
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -170,11 +177,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if customers:
             s = s.model_copy(update={"customers": customers})
         with state.lock:
-            result = state.measured()
+            result, base = state.measured(), state.baseline()
         unit = unit_costs(result, state.config, s)
         out = summary(s, unit, state.settings.margin_target)
         out["measured"] = {"cost_per_ask": result.cost_per_ask, "cost_per_draft": result.cost_per_draft,
                            "cogs_per_1k": result.cogs_per_1k, "fixed_monthly": float(unit.fixed_monthly)}
+        before = summary(s, unit_costs(base, BASELINE, s), state.settings.margin_target)
+        out["baseline"] = {k: before[k] for k in ("gross_margin", "ai_cogs_per_account", "runway_months", "default_alive",
+                                                    "blended_payback_months", "net_burn", "cash_curve")}
         return out
 
     @api.get("/v1/ledger")

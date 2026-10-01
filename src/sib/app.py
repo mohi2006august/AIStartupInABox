@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field, replace
+from datetime import date
 from decimal import Decimal
 from functools import lru_cache
 
@@ -170,8 +171,10 @@ def tuned_embedder(tuned: bool) -> HashingEmbedder | TunedEmbedder:
 
 
 class Stack:
-    def __init__(self, config: StackConfig | None = None, corpus: Corpus | None = None, clock: SimClock | None = None) -> None:
+    def __init__(self, config: StackConfig | None = None, corpus: Corpus | None = None, clock: SimClock | None = None,
+                 today: date | None = None) -> None:
         self.config = config or StackConfig()
+        self.today = today or date.today()  # benchmarks pin it so token counts never drift with the calendar
         self.corpus = corpus or build_corpus()
         self.clock = clock or SimClock()
         c = self.config
@@ -321,7 +324,7 @@ class Stack:
         prep = self._prepare(tenant_id, matter_id, instruction, feature="draft")
         fact, fact_cost, fact_latency, fact_usage = self._answer(model_id, prep, instruction)
         client, counterparty = matter.name.split(" v. ")
-        text = render_draft(choices, DraftRequest(tenant_id, doc_type, audience, client, counterparty, matter.name, action, days),
+        text = render_draft(choices, DraftRequest(tenant_id, doc_type, audience, client, counterparty, matter.name, action, days, self.today),
                             self.corpus.tenants[tenant_id])
         if fact.citations:
             text += f'\n\nProvision relied on: "{fact.text}" [{fact.citations[0].title}]'
