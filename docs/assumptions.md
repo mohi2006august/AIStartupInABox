@@ -47,5 +47,5 @@ modelled number for a measured one.
 | LLMs | `SimProvider` | `ClaudeProvider` (`pip install -e ".[claude]"`, set `LIVE_MODELS=true` and credentials); vLLM for self-hosted tiers |
 | Vector store | in-memory, per-tenant collections | Postgres + pgvector with row-level security |
 | MCP connectors | in-memory drive, email and calendar | Google Drive / SharePoint, Gmail / Graph, calendar APIs behind the same three classes |
-| Billing | `LocalGateway` writes invoices as JSON | a Stripe gateway behind the `BillingGateway` protocol (not added: new paid service) |
+| Billing | `LocalGateway` writes invoices as JSON when `STRIPE_KEY` is unset | `StripeGateway` (draft invoices, idempotent, webhook status); tested against a fake client and Stripe's signature scheme, not yet against a real test-mode account |
 | Tenant identity | `X-Tenant-Id` header | SSO session |

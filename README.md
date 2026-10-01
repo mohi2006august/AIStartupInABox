@@ -29,7 +29,7 @@ make dev         # API + web console on http://127.0.0.1:8000
 | `sib ask firm_aurora aurora-m1 "How much warning is needed to end the tenancy?"` | Cited answer from one matter |
 | `sib draft firm_aurora aurora-m1 "How much warning is needed to end the tenancy?"` | Letter in the firm's style, grounded in a provision |
 | `sib mcp --tenant firm_aurora --user lawyer1` | MCP server over stdio (drive, email, calendar) |
-| `sib billing --period 2026-10` | Invoice metered API usage |
+| `sib billing --period 2026-10` | Invoice metered API usage (Stripe when `STRIPE_KEY` is set, local JSON otherwise) |
 
 ## Results so far
 
@@ -64,7 +64,7 @@ question ─► context manager ─► hybrid retrieval ─► token budget ─�
 |---|---|
 | FR-01 Cited RAG | `rag.py` (chunking, BM25, RRF, verification), `embeddings.py` (InfoNCE-tuned adapter), `vectordb.py` (per-tenant collections, IVF) |
 | FR-02 MCP integrations | `mcp_gateway.py` (approval-gated writes, audit log, JSON-RPC stdio server) |
-| FR-03 Metering + billing | `metering.py`, `billing.py`, `subscriptions.py` |
+| FR-03 Metering + billing | `metering.py`, `billing.py`, `subscriptions.py`, `stripe_billing.py` |
 | FR-04 Economics console | `economics.py`, `api.py`, `web/index.html` |
 | FR-05 Long-matter context | `context.py` (pinned facts, compaction, budgeted packing, lost-in-the-middle ordering) |
 | FR-06 Drafting model | `drafting.py` (SFT base, per-firm LoRA, early stopping, canary probe, fallback to base) |
@@ -110,6 +110,22 @@ make dev
 ```
 
 API-tier requests in the console then go to Claude (Opus 5.5 with prompt caching and server-side refusal fallbacks, Haiku 4.5 for routed easy asks). Benchmarks and economics always replay on the simulator so the ledger stays reproducible.
+
+## Billing with Stripe
+
+Seat and overage charges are computed locally from the meter (`billing.py`); `stripe_billing.py` pushes them to Stripe.
+
+```bash
+pip install -e ".[stripe]"
+export STRIPE_KEY=sk_test_...            # test mode; live keys also need STRIPE_ALLOW_LIVE=true
+sib billing --period 2026-10             # creates draft invoices for review in the Stripe Dashboard
+sib billing --period 2026-10 --finalize  # or STRIPE_FINALIZE=true: finalize so Stripe emails them
+```
+
+- Each firm becomes a Stripe customer (tenant id in metadata). Each month becomes one invoice (`collection_method=send_invoice`, `auto_advance=false`), with one invoice item per line.
+- Every call carries an idempotency key, and progress is saved to `.sib_state/` after each step. Re-running a month never bills twice, and a crash mid-invoice resumes where it stopped.
+- Trial firms and empty months are skipped.
+- Point a Stripe webhook at `POST /v1/stripe/webhook` and set `STRIPE_WEBHOOK_SECRET`. Signed `invoice.paid`, `invoice.payment_failed`, `invoice.voided` and similar events then update each firm's invoice status, which you can read at `GET /v1/billing/invoices`.
 
 ## Contributors
 

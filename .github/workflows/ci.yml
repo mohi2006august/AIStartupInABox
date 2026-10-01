@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]"
+      - run: pip install -e ".[dev,stripe]"
       - run: pytest -q
       - name: Quality gates (no release if a blocking gate fails)
         run: sib evals

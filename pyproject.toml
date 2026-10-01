@@ -14,6 +14,7 @@ dependencies = ["numpy>=1.26", "pydantic>=2.6", "pydantic-settings>=2.2", "fasta
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27"]
 claude = ["anthropic"]
+stripe = ["stripe>=16"]
 
 [project.scripts]
 sib = "sib.cli:app"

@@ -147,20 +147,29 @@ def mcp(tenant: str = typer.Option(...), user: str = typer.Option(...)) -> None:
 
 
 @app.command()
-def billing(period: str = typer.Option(..., help="YYYY-MM")) -> None:
-    """Invoice each subscription from the metered usage recorded by the API."""
-    from sib.billing import LocalGateway, build_invoice
+def billing(period: str = typer.Option(..., help="YYYY-MM"),
+            finalize: bool = typer.Option(False, help="Finalize Stripe invoices instead of leaving drafts.")) -> None:
+    """Invoice each subscription from metered usage: to Stripe when STRIPE_KEY is set, else to local JSON."""
+    from sib.billing import build_invoice
+    from sib.corpus import build_corpus
     from sib.metering import Meter
+    from sib.stripe_billing import LiveKeyRefused, make_gateway
     from sib.subscriptions import SUBSCRIPTIONS
 
     settings = get_settings()
-    meter = Meter.load(Path(settings.state_dir) / "usage.jsonl")
-    counts = meter.requests_by_tenant()
-    gateway = LocalGateway(Path(settings.state_dir) / "invoices")
+    if finalize:
+        settings = settings.model_copy(update={"stripe_finalize": True})
+    try:
+        gateway = make_gateway(settings, build_corpus().tenants)
+    except LiveKeyRefused as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(f"gateway: {type(gateway).__name__}")
+    counts = Meter.load(Path(settings.state_dir) / "usage.jsonl").requests_by_tenant()
     for sub in SUBSCRIPTIONS:
         invoice = build_invoice(sub, counts.get(sub.tenant_id, 0), period)
-        key = gateway.submit(invoice)
-        typer.echo(f"{key}: ${invoice.total} ({counts.get(sub.tenant_id, 0)} requests)")
+        ref = gateway.submit(invoice)
+        typer.echo(f"{invoice.idempotency_key}: ${invoice.total} ({counts.get(sub.tenant_id, 0)} requests) -> {ref}")
 
 
 if __name__ == "__main__":

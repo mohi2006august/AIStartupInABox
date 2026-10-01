@@ -216,6 +216,7 @@ Representing weights (and sometimes activations/KV cache) with fewer bits (int8,
 | 2026-10-01 | Keep the distilled router (Haiku for easy asks) | +1.5 margin pts; flips the scenario to default alive. Difficulty uses retrieval-coverage features only, because word features did not transfer to new phrasings. |
 | 2026-10-01 | Revert self-hosting at 10 customers | −3.5 margin pts: the $864/month node sits mostly idle. Re-bench at 15+ customers. |
 | 2026-10-01 | Revert the 6,800-token context budget | Quality gate: −2.6 pts. |
+| 2026-10-01 | Add the Stripe gateway (approved) | Pricing stays local and auditable; Stripe only receives finished invoices. Drafts by default, live keys refused unless allowed, idempotency keys plus local progress so re-runs never double-bill. |
 
 ## 8. Scratchpad
 

@@ -12,7 +12,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -256,5 +256,37 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                x_user: str = Header("partner")) -> dict[str, Any]:
         fn = state.stack.gateway.approve if verdict == "approve" else state.stack.gateway.deny
         return guarded(fn, tenant_id, approval_id, x_user)
+
+    @api.get("/v1/billing/invoices")
+    def billing_invoices(tenant_id: str = Depends(tenant)) -> dict[str, Any]:
+        """Stripe invoice ids and payment status for this firm (empty when Stripe is not configured)."""
+        from sib.stripe_billing import StripeGateway
+
+        gw = StripeGateway(None, Path(state.settings.state_dir), state.stack.corpus.tenants)
+        return {k: v for k, v in gw.statuses().items() if k.split(":")[0] == tenant_id}
+
+    @api.post("/v1/stripe/webhook", include_in_schema=False)
+    async def stripe_webhook(request: Request, stripe_signature: str = Header("")) -> dict[str, Any]:
+        """Payment-status updates from Stripe. The signature is verified before anything is read."""
+        secret = state.settings.stripe_webhook_secret
+        if not secret:
+            raise HTTPException(404, "Stripe webhooks are not configured")
+        import stripe
+
+        from sib.stripe_billing import StripeGateway
+
+        payload = await request.body()
+        try:
+            event = stripe.Webhook.construct_event(payload, stripe_signature, secret)
+        except stripe.SignatureVerificationError as exc:
+            raise HTTPException(400, "invalid signature") from exc
+        except ValueError as exc:
+            raise HTTPException(400, "invalid payload") from exc
+        matched = False
+        if event.type.startswith("invoice."):
+            gw = StripeGateway(None, Path(state.settings.state_dir), state.stack.corpus.tenants)
+            matched = gw.apply_event(event.type, event.data.object.to_dict())
+        log.info("stripe_webhook", extra={"type": event.type, "matched": matched})
+        return {"received": True, "matched": matched}
 
     return api

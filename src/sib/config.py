@@ -11,7 +11,11 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
     vllm_url: str = ""
-    stripe_key: str = ""
+    stripe_key: str = ""  # sk_test_... (test mode); live keys also need STRIPE_ALLOW_LIVE=true
+    stripe_webhook_secret: str = ""
+    stripe_finalize: bool = False  # leave invoices as drafts for review unless set
+    stripe_allow_live: bool = False
+    billing_currency: str = "usd"
     database_url: str = ""
     margin_target: float = 0.75
     live_models: bool = False  # LIVE_MODELS=true: API-tier models call the real Claude API
