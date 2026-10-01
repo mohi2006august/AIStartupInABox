@@ -1,0 +1,29 @@
+{
+  "id": "tuned-embeddings",
+  "date": "2026-10-01",
+  "change": "Contrastively tuned embeddings for retrieval",
+  "concepts": [
+    "Embeddings",
+    "RAG",
+    "Vector Database"
+  ],
+  "quality_before": 68.41,
+  "quality_after": 99.35,
+  "p95_latency_before_ms": 6122,
+  "p95_latency_after_ms": 6132,
+  "cogs_per_1k_before": "45.96",
+  "cogs_per_1k_after": "46.72",
+  "gross_margin_delta_pts": -0.41,
+  "runway_delta_months": -0.12,
+  "decision": "kept",
+  "quality_metric": "ask",
+  "gross_margin_before": 0.5875,
+  "gross_margin_after": 0.5834,
+  "payback_before_months": 8.135021169548141,
+  "payback_after_months": 8.193874422632259,
+  "runway_before_months": 18.44,
+  "runway_after_months": 18.32,
+  "default_alive_after": false,
+  "customers": 10,
+  "reason": "quality within gate and margin not reduced"
+}

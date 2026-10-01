@@ -1,0 +1,28 @@
+{
+  "id": "router",
+  "date": "2026-10-01",
+  "change": "Distilled router sends easy asks to a small API model",
+  "concepts": [
+    "Knowledge Distillation",
+    "LLMs"
+  ],
+  "quality_before": 99.35,
+  "quality_after": 99.35,
+  "p95_latency_before_ms": 5863,
+  "p95_latency_after_ms": 5829,
+  "cogs_per_1k_before": "24.47",
+  "cogs_per_1k_after": "22.31",
+  "gross_margin_delta_pts": 1.47,
+  "runway_delta_months": 7.33,
+  "decision": "kept",
+  "quality_metric": "ask",
+  "gross_margin_before": 0.7194,
+  "gross_margin_after": 0.7341,
+  "payback_before_months": 6.587237398024415,
+  "payback_after_months": 6.449048926632674,
+  "runway_before_months": 28.67,
+  "runway_after_months": null,
+  "default_alive_after": true,
+  "customers": 10,
+  "reason": "quality within gate and margin not reduced"
+}

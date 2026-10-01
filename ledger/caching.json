@@ -1,0 +1,28 @@
+{
+  "id": "caching",
+  "date": "2026-10-01",
+  "change": "Exact + semantic + provider prompt caching",
+  "concepts": [
+    "Caches",
+    "Tokenization"
+  ],
+  "quality_before": 99.35,
+  "quality_after": 99.35,
+  "p95_latency_before_ms": 6132,
+  "p95_latency_after_ms": 5863,
+  "cogs_per_1k_before": "46.72",
+  "cogs_per_1k_after": "24.47",
+  "gross_margin_delta_pts": 13.6,
+  "runway_delta_months": 10.35,
+  "decision": "kept",
+  "quality_metric": "ask",
+  "gross_margin_before": 0.5834,
+  "gross_margin_after": 0.7194,
+  "payback_before_months": 8.193874422632259,
+  "payback_after_months": 6.587237398024415,
+  "runway_before_months": 18.32,
+  "runway_after_months": 28.67,
+  "default_alive_after": false,
+  "customers": 10,
+  "reason": "quality within gate and margin not reduced"
+}

@@ -1,0 +1,30 @@
+{
+  "id": "selfhost",
+  "date": "2026-10-01",
+  "change": "Self-host AWQ 8B with per-firm LoRA for drafting and easy asks",
+  "concepts": [
+    "Quantization",
+    "LoRA",
+    "Fine Tuning",
+    "Overfitting"
+  ],
+  "quality_before": 86.73,
+  "quality_after": 90.65,
+  "p95_latency_before_ms": 5829,
+  "p95_latency_after_ms": 5859,
+  "cogs_per_1k_before": "22.31",
+  "cogs_per_1k_after": "7.54",
+  "gross_margin_delta_pts": -3.53,
+  "runway_delta_months": 0.0,
+  "decision": "reverted",
+  "quality_metric": "draft",
+  "gross_margin_before": 0.7341,
+  "gross_margin_after": 0.6988,
+  "payback_before_months": 6.449048926632674,
+  "payback_after_months": 6.74306728611549,
+  "runway_before_months": null,
+  "runway_after_months": null,
+  "default_alive_after": true,
+  "customers": 10,
+  "reason": "gross margin fell 3.5 pts at 10 customers for a +3.9 pt quality change; the GPU node costs $864/month and traffic does not fill it yet (margin-positive from about 15 customers)"
+}
